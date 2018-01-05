@@ -293,7 +293,7 @@ bool Socket::CreatedByConnect() const {
 }
 
 SocketMessage* const DUMMY_USER_MESSAGE = (SocketMessage*)0x1;
-const uint32_t MAX_PIPELINED_COUNT = 65536;
+const uint32_t MAX_PIPELINED_COUNT = 32768;
 
 struct BAIDU_CACHELINE_ALIGNMENT Socket::WriteRequest {
     static WriteRequest* const UNCONNECTED;
@@ -304,9 +304,12 @@ struct BAIDU_CACHELINE_ALIGNMENT Socket::WriteRequest {
     Socket* socket;
     
     uint32_t pipelined_count() const {
-        return (_pc_and_udmsg >> 48) & 0xFFFF;
+        return (_pc_and_udmsg >> 48) & 0x7FFF;
     }
-    void clear_pipelined_count() {
+    bool is_with_auth() const {
+        return _pc_and_udmsg & 0x8000000000000000ULL;
+    }
+    void clear_pipelined_count_and_with_auth() {
         _pc_and_udmsg &= 0xFFFFFFFFFFFFULL;
     }
     SocketMessage* user_message() const {
@@ -316,7 +319,10 @@ struct BAIDU_CACHELINE_ALIGNMENT Socket::WriteRequest {
         _pc_and_udmsg &= 0xFFFF000000000000ULL;
     }
     void set_pipelined_count_and_user_message(
-        uint32_t pc, SocketMessage* msg) {
+        uint32_t pc, SocketMessage* msg, bool with_auth) {
+        if (with_auth) {
+          pc |= (1 << 15);
+        }
         _pc_and_udmsg = ((uint64_t)pc << 48) | (uint64_t)(uintptr_t)msg;
     }
 
@@ -329,7 +335,7 @@ struct BAIDU_CACHELINE_ALIGNMENT Socket::WriteRequest {
                 // is already failed.
                 (void)msg->AppendAndDestroySelf(&dummy_buf, NULL);
             }
-            set_pipelined_count_and_user_message(0, NULL);
+            set_pipelined_count_and_user_message(0, NULL, false);
             return true;
         }
         return false;
@@ -368,8 +374,9 @@ void Socket::WriteRequest::Setup(Socket* s) {
         // The struct will be popped when reading a message from the socket.
         PipelinedInfo pi;
         pi.count = pc;
+        pi.with_auth = is_with_auth();
         pi.id_wait = id_wait;
-        clear_pipelined_count(); // avoid being pushed again
+        clear_pipelined_count_and_with_auth(); // avoid being pushed again
         s->PushPipelinedInfo(pi);
     }
 }
@@ -1456,7 +1463,7 @@ int Socket::Write(butil::IOBuf* data, const WriteOptions* options_in) {
     req->next = WriteRequest::UNCONNECTED;
     req->id_wait = opt.id_wait;
     req->set_pipelined_count_and_user_message(
-        opt.pipelined_count, DUMMY_USER_MESSAGE);
+        opt.pipelined_count, DUMMY_USER_MESSAGE, opt.with_auth);
     return StartWrite(req, opt);
 }
 
@@ -1491,7 +1498,7 @@ int Socket::Write(SocketMessagePtr<>& msg, const WriteOptions* options_in) {
     // wait until it points to a valid WriteRequest or NULL.
     req->next = WriteRequest::UNCONNECTED;
     req->id_wait = opt.id_wait;
-    req->set_pipelined_count_and_user_message(opt.pipelined_count, msg.release());
+    req->set_pipelined_count_and_user_message(opt.pipelined_count, msg.release(), opt.with_auth);
     return StartWrite(req, opt);
 }
 

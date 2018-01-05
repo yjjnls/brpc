@@ -11,8 +11,8 @@ You can use it to:
   * restful http/https, h2/h2c (compatible with [grpc](https://github.com/grpc/grpc), will be opensourced). using http in brpc is much more friendly than [libcurl](https://curl.haxx.se/libcurl/).
   * [redis](docs/en/redis_client.md) and [memcached](docs/en/memcache_client.md), thread-safe, more friendly and performant than the official clients
   * [rtmp](https://github.com/brpc/brpc/blob/master/src/brpc/rtmp.h)/[flv](https://en.wikipedia.org/wiki/Flash_Video)/[hls](https://en.wikipedia.org/wiki/HTTP_Live_Streaming), for building [live-streaming services](docs/cn/live_streaming.md).
-  * hadoop_rpc(not opensourced yet)
-  * [rdma](https://en.wikipedia.org/wiki/Remote_direct_memory_access) support via [openucx](https://github.com/openucx/ucx) (will be opensourced)
+  * hadoop_rpc (may be opensourced)
+  * [rdma](https://en.wikipedia.org/wiki/Remote_direct_memory_access) support (will be opensourced)
   * all sorts of protocols used in Baidu: [baidu_std](docs/cn/baidu_std.md), [streaming_rpc](docs/en/streaming_rpc.md), hulu_pbrpc, [sofa_pbrpc](https://github.com/baidu/sofa-pbrpc), nova_pbrpc, public_pbrpc, ubrpc, and nshead-based ones.
   * Access protobuf-based protocols with HTTP+json, probably from another language.
   * Build [HA](https://en.wikipedia.org/wiki/High_availability) distributed services using an industrial-grade implementation of [RAFT consensus algorithm](https://raft.github.io) (will be opensourced at [braft](https://github.com/brpc/braft))
@@ -21,7 +21,7 @@ You can use it to:
   * Access service [synchronously](docs/en/client.md#synchronus-call) or [asynchronously](docs/en/client.md#asynchronous-call), or even [semi-synchronously](docs/en/client.md#semi-synchronous-call).
   * Use [combo channels](docs/en/combo_channel.md) to simplify complicated client patterns declaratively, including sharded and parallel accesses.
 * Debug services [via http](docs/en/builtin_service.md), and run  [cpu](docs/cn/cpu_profiler.md), [heap](docs/cn/heap_profiler.md) and [contention](docs/cn/contention_profiler.md) profilers.
-* Get [better latency and throughput](#better-latency-and-throughput).
+* Get [better latency and throughput](docs/en/overview.md#better-latency-and-throughput).
 * [Extend brpc](docs/en/new_protocol.md) with the protocols used in your organization quickly, or customize components, including [naming services](docs/cn/load_balancing.md#名字服务) (dns, zk, etcd), [load balancers](docs/cn/load_balancing.md#负载均衡) (rr, random, consistent hashing)
 
 # Try it!
@@ -99,7 +99,7 @@ brpc welcomes contributions, especially those on adapting different platforms an
 
 Make sure the code meets following requirements before submitting your PR:
 
-- Conforms to [google C++ coding style](https://google.github.io/styleguide/cppguide.html)
+- The code conforms to [google C++ coding style](https://google.github.io/styleguide/cppguide.html) and is indented by 4 spaces.
 - The code appears where it should be. For example the code to support an extra protocol should not be put in general classes like server.cpp, channel.cpp, while a general modification would better not be hidden inside a very specific protocol.
 - Has unittests.
 
